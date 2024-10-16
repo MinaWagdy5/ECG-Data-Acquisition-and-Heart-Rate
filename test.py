@@ -44,6 +44,7 @@ class ECGWindow(QMainWindow):
         self.timer.start(1000)  # Update every 1000 ms (1 second)
         
         self.BPM = 70  # Default BPM
+        self.old_BPM = 70
         self.sampling_rate = 1000  # Increase sampling rate to spread out the signal more
         self.duration = 2  # Duration for each segment of signal
         self.total_time = 0
@@ -62,6 +63,9 @@ class ECGWindow(QMainWindow):
             self.ser = None
 
     def generate_ecg_waveform(self, BPM):
+        if BPM == 0:
+            return np.zeros(int(self.sampling_rate * self.duration))  # Constant line at zero
+
         beat_duration = 60 / BPM
         t = np.linspace(0, beat_duration, int(self.sampling_rate * beat_duration))
 
@@ -90,9 +94,16 @@ class ECGWindow(QMainWindow):
             if match:
                 self.BPM = int(match.group())
                 print(f"Received BPM: {self.BPM}")
-
-            
-        
+                if self.BPM >= 60 and self.BPM <= 100:
+                    print("regular heart beat")
+                else:
+                    print("Irregular heart beat")
+    
+        if self.old_BPM != self.BPM:
+            self.plot.clear()
+            self.x_start = 0
+            self.x_end = 10
+            self.old_BPM = self.BPM
 
         ecg_signal = self.generate_ecg_waveform(self.BPM)
         # ecg_signal = np.tile(ecg_signal, int(np.ceil(self.duration * self.sampling_rate / len(ecg_signal))))[:int(self.sampling_rate * self.duration)]

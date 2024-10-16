@@ -55,6 +55,10 @@ def read_serial_data(serial_port):
             if match:
                 BPM = int(match.group())
                 print(f"Received BPM: {BPM}")
+                if BPM >= 60 and BPM <= 100:
+                    print("regular heart beat")
+                else:
+                    print("Irregular heart beat")
 
         t, ecg_signal = generate_ecg_waveform(BPM, duration, sampling_rate)
         line.set_xdata(t)
