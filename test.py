@@ -8,6 +8,7 @@ import re
 import time
 
 class ECGWindow(QMainWindow):
+    
     def __init__(self, serial_port):
         super().__init__()
 
@@ -28,7 +29,12 @@ class ECGWindow(QMainWindow):
         self.layout.addWidget(self.plot_widget)
 
         self.plot = self.plot_widget.plot(pen='g')
-        self.plot_widget.setYRange(-5, 5)  # Amplified range for better visibility
+        self.plot_widget.setYRange(-3, 3)  # Amplified range for better visibility
+
+        self.x_start = 0
+        self.x_end = 10
+        
+        self.plot_widget.setXRange(self.x_start, self.x_end)
         self.plot_widget.setLabel('left', 'Amplitude')
         self.plot_widget.setLabel('bottom', 'Time (s)')
         self.plot_widget.setLimits(xMin=0, xMax=60)  # Limit x-axis from 0 to 60
@@ -41,7 +47,7 @@ class ECGWindow(QMainWindow):
         self.sampling_rate = 1000  # Increase sampling rate to spread out the signal more
         self.duration = 2  # Duration for each segment of signal
         self.total_time = 0
-        self.max_duration = 60  # Max duration for x-axis
+        self.max_duration = 600  # Max duration for x-axis
         self.time_data = np.linspace(0, self.duration, int(self.sampling_rate * self.duration))
         self.signal_data = np.zeros(int(self.sampling_rate * self.max_duration))  # Placeholder for ECG signal data
         self.gap_duration = 0.2  # Duration of gap in seconds
@@ -85,8 +91,11 @@ class ECGWindow(QMainWindow):
                 self.BPM = int(match.group())
                 print(f"Received BPM: {self.BPM}")
 
+            
+        
+
         ecg_signal = self.generate_ecg_waveform(self.BPM)
-        ecg_signal = np.tile(ecg_signal, int(np.ceil(self.duration * self.sampling_rate / len(ecg_signal))))[:int(self.sampling_rate * self.duration)]
+        # ecg_signal = np.tile(ecg_signal, int(np.ceil(self.duration * self.sampling_rate / len(ecg_signal))))[:int(self.sampling_rate * self.duration)]
 
         if self.total_time >= self.max_duration:
             self.signal_data = np.zeros(int(self.sampling_rate * self.max_duration))  # Clear the signal data
@@ -94,7 +103,7 @@ class ECGWindow(QMainWindow):
 
         # Insert gaps
         extended_signal = np.concatenate((ecg_signal, np.zeros(self.gap_samples)))
-        self.signal_data = np.roll(self.signal_data, -len(extended_signal))
+        self.signal_data = np.roll(self.signal_data, len(extended_signal))
         self.signal_data[-len(extended_signal):] = extended_signal
 
         # Extend the time data
@@ -103,7 +112,10 @@ class ECGWindow(QMainWindow):
         self.total_time += self.duration + self.gap_duration
 
         self.plot.setData(self.time_data, self.signal_data)
-        self.plot_widget.setXRange(0, self.max_duration)
+        # self.plot_widget.setXRange(0, self.max_duration)
+        self.x_start += 0.6
+        self.x_end += 0.6
+        self.plot_widget.setXRange(self.x_start, self.x_end)
 
     def closeEvent(self, event):
         if self.ser:

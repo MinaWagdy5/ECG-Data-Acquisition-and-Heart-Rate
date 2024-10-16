@@ -7,6 +7,7 @@ import serial
 import re
 import time
 
+
 class ECGWindow(QMainWindow):
     def __init__(self, serial_port):
         super().__init__()
@@ -28,19 +29,21 @@ class ECGWindow(QMainWindow):
         self.layout.addWidget(self.plot_widget)
 
         self.plot = self.plot_widget.plot(pen='g')
-        self.plot_widget.setYRange(-5, 5)  # Amplified range for better visibility
+        # Amplified range for better visibility
+        self.plot_widget.setYRange(-5, 5)
         self.plot_widget.setLabel('left', 'Amplitude')
         self.plot_widget.setLabel('bottom', 'Time (s)')
-        
+
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_plot)
         self.timer.start(50)  # Update every 50 ms
-        
+
         self.BPM = 70  # Default BPM
         self.sampling_rate = 100  # Lower sampling rate to smooth out the signal
         self.duration = 10  # Duration for each segment of signal
         self.time_data = np.arange(0, self.duration, 1/self.sampling_rate)
-        self.signal_data = np.zeros(self.duration * self.sampling_rate)  # Placeholder for ECG signal data
+        # Placeholder for ECG signal data
+        self.signal_data = np.zeros(self.duration * self.sampling_rate)
 
     def initSerial(self):
         try:
@@ -52,20 +55,21 @@ class ECGWindow(QMainWindow):
 
     def generate_ecg_waveform(self, BPM):
         beat_duration = 60 / BPM
-        t = np.linspace(0, beat_duration, int(self.sampling_rate * beat_duration))
+        t = np.linspace(0, beat_duration, int(
+            self.sampling_rate * beat_duration))
 
         def p_wave(t):
             return 0.25 * np.sin(np.pi * t / 0.09) * (t < 0.09)
-        
+
         def q_wave(t):
             return -0.1 * np.sin(np.pi * (t - 0.09) / 0.066) * ((t >= 0.09) & (t < 0.156))
-        
+
         def r_wave(t):
             return 1.0 * np.sin(np.pi * (t - 0.156) / 0.1) * ((t >= 0.156) & (t < 0.256))
-        
+
         def s_wave(t):
             return -0.25 * np.sin(np.pi * (t - 0.256) / 0.066) * ((t >= 0.256) & (t < 0.322))
-        
+
         def t_wave(t):
             return 0.35 * np.sin(np.pi * (t - 0.36) / 0.142) * ((t >= 0.36) & (t < 0.502))
 
@@ -81,7 +85,8 @@ class ECGWindow(QMainWindow):
                 print(f"Received BPM: {self.BPM}")
 
         ecg_signal = self.generate_ecg_waveform(self.BPM)
-        ecg_signal = np.tile(ecg_signal, int(np.ceil(self.duration * self.sampling_rate / len(ecg_signal))))[:self.duration * self.sampling_rate]
+        ecg_signal = np.tile(ecg_signal, int(np.ceil(
+            self.duration * self.sampling_rate / len(ecg_signal))))[:self.duration * self.sampling_rate]
 
         # Shift the signal data and append new data
         self.signal_data = np.roll(self.signal_data, -len(ecg_signal))
@@ -97,6 +102,7 @@ class ECGWindow(QMainWindow):
         if self.ser:
             self.ser.close()
         event.accept()
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
