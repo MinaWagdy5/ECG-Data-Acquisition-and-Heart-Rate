@@ -56,7 +56,7 @@ void loop() {
   }
 
   if (elapsedSeconds == 6) { // Measure over 6 seconds for better accuracy
-    heartBeatsPerMinute = heartBeatCount*10 ; // Convert 6-second count to beats per minute
+    heartBeatsPerMinute = heartBeatCount*10 ;
     isCounting = false;
 
     lcd.setCursor(0, 2);
